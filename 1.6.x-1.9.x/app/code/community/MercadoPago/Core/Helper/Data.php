@@ -40,49 +40,40 @@ class MercadoPago_Core_Helper_Data
 
     protected $_website;
 
-    public function log($message, $file = "mercadopago.log", $array = null)
-    {
-        $actionLog = Mage::getStoreConfig('payment/mercadopago/logs');
 
-        if ($actionLog) {
-            if (!is_null($array)) {
-                $message .= " - " . json_encode($array);
-            }
-
-            Mage::log($message, null, $file, $actionLog);
-        }
-    }
-
+    /**
+     * @return MercadoPago_MP
+     * @throws Mage_Core_Exception
+     */
     public function getApiInstance()
     {
-
         // if (empty($this->_apiInstance)) {
         $params = func_num_args();
-        
+
         if ($params > 2 || $params < 1) {
             Mage::throwException("Invalid arguments. Use CLIENT_ID and CLIENT SECRET, or ACCESS_TOKEN");
         }
         if ($params == 1) {
-            $api = new MercadoPago_Lib_Api(func_get_arg(0));
+            $api = new MercadoPago_MP(func_get_arg(0));
             $api->set_platform(self::PLATFORM_V1_WHITELABEL);
         } else {
-            $api = new MercadoPago_Lib_Api(func_get_arg(0), func_get_arg(1));
+            $api = new MercadoPago_MP(func_get_arg(0), func_get_arg(1));
             $api->set_platform(self::PLATFORM_DESKTOP);
         }
         if (Mage::getStoreConfigFlag('payment/mercadopago_standard/sandbox_mode')) {
             $api->sandbox_mode(true);
         }
 
-        $api->set_type(self::TYPE . ' ' . (string) Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version);
+        $api->set_type(self::TYPE . ' ' . (string)Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version);
 
         $this->_apiInstance = $api;
         // }
 
         // set data sdk rest client
-        MercadoPago_Lib_RestClient::setModuleVersion((string) Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version);
-        MercadoPago_Lib_RestClient::setUrlStore(Mage::getStoreConfig('web/secure/base_url'));
-        MercadoPago_Lib_RestClient::setEmailAdmin(Mage::getStoreConfig('trans_email/ident_general/email'));
-        MercadoPago_Lib_RestClient::setCountryInitial(Mage::getStoreConfig('general/country/default'));
+        MercadoPago_RestClient_MpRestClient::setModuleVersion((string)Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version);
+        MercadoPago_RestClient_MpRestClient::setUrlStore(Mage::getStoreConfig('web/secure/base_url'));
+        MercadoPago_RestClient_MpRestClient::setEmailAdmin(Mage::getStoreConfig('trans_email/ident_general/email'));
+        MercadoPago_RestClient_MpRestClient::setCountryInitial(Mage::getStoreConfig('general/country/default'));
 
         return $this->_apiInstance;
     }
@@ -133,16 +124,16 @@ class MercadoPago_Core_Helper_Data
         $transactionAmount = $this->_getMultiCardValue($data, 'transaction_amount');
 
         if (isset($data['total_paid_amount'])) {
-          $paidAmount = $this->_getMultiCardValue($data, 'total_paid_amount');
+            $paidAmount = $this->_getMultiCardValue($data, 'total_paid_amount');
         } else {
-          $paidAmount = $this->_getMultiCardValue($data, 'transaction_amount');
+            $paidAmount = $this->_getMultiCardValue($data, 'transaction_amount');
         }
 
         $shippingCost = $this->_getMultiCardValue($data, 'shipping_cost');
 
-        if(isset($data['shipping_amount'])){
-          $shippingCost = $this->_getMultiCardValue($data, 'shipping_amount');    
-        }      
+        if (isset($data['shipping_amount'])) {
+            $shippingCost = $this->_getMultiCardValue($data, 'shipping_amount');
+        }
 
         $originalAmount = $transactionAmount + $shippingCost;
 
@@ -156,8 +147,6 @@ class MercadoPago_Core_Helper_Data
             $paidAmount += $couponAmount;
             $financingCost = $paidAmount - $originalAmount;
         }
-
-
 
 
         if ($shippingCost > 0) {
@@ -310,14 +299,14 @@ class MercadoPago_Core_Helper_Data
             $additionalInfo = $order->getPayment()->getData('additional_information');
             $methodCode = $order->getPayment()->getData('method');
             $analyticsData = array(
-                'payment_id'    => isset($additionalInfo['payment_id_detail']) ? $order->getPayment()->getData('additional_information')['payment_id_detail'] : '',
-                'payment_type'  => 'credit_card',
+                'payment_id' => isset($additionalInfo['payment_id_detail']) ? $order->getPayment()->getData('additional_information')['payment_id_detail'] : '',
+                'payment_type' => 'credit_card',
                 'checkout_type' => 'custom'
             );
             if ($methodCode == 'mercadopago_custom') {
-                $analyticsData['public_key'] =  Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_PUBLIC_KEY);
+                $analyticsData['public_key'] = Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_PUBLIC_KEY);
             } elseif ($methodCode == 'mercadopago_standard') {
-                $analyticsData['analytics_key'] =  Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_CLIENT_ID);
+                $analyticsData['analytics_key'] = Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_CLIENT_ID);
                 $analyticsData['checkout_type'] = 'basic';
                 $analyticsData['payment_type'] = isset($additionalInfo['payment_type_id']) ? $order->getPayment()->getData('additional_information')['payment_type_id'] : 'credit_card';
             } else {
@@ -342,10 +331,10 @@ class MercadoPago_Core_Helper_Data
     public function getPlatformInfo()
     {
         return array(
-            "platform"         => "Magento",
+            "platform" => "Magento",
             "platform_version" => (string)Mage::getVersion(),
-            "module_version"   => (string)Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version,
-            "code_version"     => phpversion()
+            "module_version" => (string)Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version,
+            "code_version" => phpversion()
         );
     }
 
@@ -371,13 +360,13 @@ class MercadoPago_Core_Helper_Data
             "data" => $this->getPlatformInfo()
         );
         $fields = array(
-            'two_cards'                          => $this->_website->getConfig('payment/mercadopago_custom/allow_2_cards'),
-            'checkout_basic'                     => $this->_website->getConfig('payment/mercadopago_standard/active'),
-            'checkout_custom_credit_card'        => $this->_website->getConfig('payment/mercadopago_custom/active'),
-            'checkout_custom_ticket'             => $this->_website->getConfig('payment/mercadopago_customticket/active'),
-            'mercado_envios'                     => $this->_website->getConfig('carriers/mercadoenvios/active'),
+            'two_cards' => $this->_website->getConfig('payment/mercadopago_custom/allow_2_cards'),
+            'checkout_basic' => $this->_website->getConfig('payment/mercadopago_standard/active'),
+            'checkout_custom_credit_card' => $this->_website->getConfig('payment/mercadopago_custom/active'),
+            'checkout_custom_ticket' => $this->_website->getConfig('payment/mercadopago_customticket/active'),
+            'mercado_envios' => $this->_website->getConfig('carriers/mercadoenvios/active'),
             'checkout_custom_credit_card_coupon' => $this->_website->getConfig('payment/mercadopago_custom/coupon_mercadopago'),
-            'checkout_custom_ticket_coupon'      => $this->_website->getConfig('payment/mercadopago_customticket/coupon_mercadopago')
+            'checkout_custom_ticket_coupon' => $this->_website->getConfig('payment/mercadopago_customticket/coupon_mercadopago')
         );
         foreach ($fields as $key => $field) {
             $request['data'][$key] = $field == 1 ? 'true' : 'false';
@@ -389,8 +378,9 @@ class MercadoPago_Core_Helper_Data
 
     }
 
-    public function getVersionModule(){
-      return (string) Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version;
+    public function getVersionModule()
+    {
+        return (string)Mage::getConfig()->getModuleConfig("MercadoPago_Core")->version;
     }
 
 }

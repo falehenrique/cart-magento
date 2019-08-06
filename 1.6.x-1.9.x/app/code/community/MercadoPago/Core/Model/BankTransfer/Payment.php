@@ -32,7 +32,7 @@ class MercadoPago_Core_Model_BankTransfer_Payment
      */
      public function initialize($paymentAction, $stateObject)
      {
-       Mage::helper('mercadopago')->log("Bank Transfer -> initialize", 'mercadopago-custom.log', $infoForm);
+       Mage::helper('mercadopago/log')->log("Bank Transfer -> initialize", 'mercadopago-custom.log', $infoForm);
        $response = $this->preparePostPayment();
        if ($response !== false) {
          $this->getInfoInstance()->setAdditionalInformation('activation_uri', $response['response']['transaction_details']['external_resource_url']);
@@ -53,7 +53,7 @@ class MercadoPago_Core_Model_BankTransfer_Payment
         $infoForm = $data->getData();
         $infoForm = $infoForm['mercadopago_banktransfer'];
 
-        Mage::helper('mercadopago')->log("Bank Transfer -> info form", 'mercadopago-custom.log', $infoForm);
+        Mage::helper('mercadopago/log')->log("Bank Transfer -> info form", 'mercadopago-custom.log', $infoForm);
 
         $info = $this->getInfoInstance();
 
@@ -70,7 +70,7 @@ class MercadoPago_Core_Model_BankTransfer_Payment
     {
         //check actual time
         $init = microtime(true);
-        Mage::helper('mercadopago')->log("Bank Transfer -> init prepare post payment", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Bank Transfer -> init prepare post payment", 'mercadopago-custom.log');
 
         $core = Mage::getModel('mercadopago/core');
         $quote = $this->_getQuote();
@@ -102,21 +102,21 @@ class MercadoPago_Core_Model_BankTransfer_Payment
 
         $preference['additional_info']['ip_address'] = $ip;
 
-        Mage::helper('mercadopago')->log("Bank Transfer -> PREFERENCE to POST /v1/payments", 'mercadopago-custom.log', $preference);
+        Mage::helper('mercadopago/log')->log("Bank Transfer -> PREFERENCE to POST /v1/payments", 'mercadopago-custom.log', $preference);
 
          /* POST /v1/payments */
         $response = $core->postPaymentV1($preference);
       
         //calculate time consumed
         $timeConsumed = round(microtime(true) - $init, 3); 
-        Mage::helper('mercadopago')->log("Time consumed to create payment (bank transfer): " . $timeConsumed . "s", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Time consumed to create payment (bank transfer): " . $timeConsumed . "s", 'mercadopago-custom.log');
       
         return $response;
     }
 
     public function getOrderPlaceRedirectUrl()
     {
-        Mage::helper('mercadopago')->log("Bank Transfer -> getOrderPlaceRedirectUrl", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Bank Transfer -> getOrderPlaceRedirectUrl", 'mercadopago-custom.log');
 
         return Mage::getUrl('mercadopago/checkout/page', array('_secure' => true));
     }

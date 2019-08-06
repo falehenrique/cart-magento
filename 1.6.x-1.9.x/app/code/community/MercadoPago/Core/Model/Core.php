@@ -1,21 +1,9 @@
 <?php
 
 /**
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL).
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
- *
- * @category       Payment Gateway
- * @package        MercadoPago
- * @author         Gabriel Matsuoka (gabriel.matsuoka@gmail.com)
- * @copyright      Copyright (c) MercadoPago [http://www.mercadopago.com]
- * @license        http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * Class MercadoPago_Core_Model_Core
  */
-class MercadoPago_Core_Model_Core
-    extends Mage_Payment_Model_Method_Abstract
+class MercadoPago_Core_Model_Core extends Mage_Payment_Model_Method_Abstract
 {
     protected $_code = 'mercadopago';
     protected $_accessToken;
@@ -37,7 +25,7 @@ class MercadoPago_Core_Model_Core
     const LOG_FILE = 'mercadopago-custom.log';
 
     /**
-     * @return Mage_Checkout_Model_Session
+     * @return Mage_Core_Model_Abstract
      */
     protected function _getCheckout()
     {
@@ -45,9 +33,7 @@ class MercadoPago_Core_Model_Core
     }
 
     /**
-     * Get admin checkout session namespace
-     *
-     * @return Mage_Adminhtml_Model_Session_Quote
+     * @return Mage_Core_Model_Abstract
      */
     protected function _getAdminCheckout()
     {
@@ -55,11 +41,9 @@ class MercadoPago_Core_Model_Core
     }
 
     /**
-     * Retrieves Quote
-     *
-     * @param integer $quoteId
-     *
-     * @return Mage_Sales_Model_Quote
+     * @param null $quoteId
+     * @return Mage_Core_Model_Abstract
+     * @throws Mage_Core_Model_Store_Exception
      */
     protected function _getQuote($quoteId = null)
     {
@@ -75,17 +59,9 @@ class MercadoPago_Core_Model_Core
     }
 
     /**
-     * Retrieves Order
-     *
-     * @param integer $incrementId
-     *
-     * @return Mage_Sales_Model_Order
+     * @param $orderId
+     * @return array
      */
-    protected function _getOrder($incrementId)
-    {
-        return Mage::getModel('sales/order')->loadByIncrementId($incrementId);
-    }
-
     public function getInfoPaymentByOrder($orderId)
     {
         $order = Mage::getModel('sales/order')->loadByIncrementId($orderId);
@@ -110,16 +86,16 @@ class MercadoPago_Core_Model_Core
             if ($payment->getAdditionalInformation($field['field']) != "") {
                 $text = Mage::helper('mercadopago')->__($field['title'], Mage::helper('mercadopago')->__($payment->getAdditionalInformation($field['field'])));
                 $infoPayments[$field['field']] = array(
-                    "text"  => $text,
+                    "text" => $text,
                     "value" => Mage::helper('mercadopago')->__($payment->getAdditionalInformation($field['field']))
                 );
             }
         }
 
         if ($payment->getAdditionalInformation('payer_identification_type') != "") {
-            $text = __($payment->getAdditionalInformation('payer_identification_type'). ': '. $payment->getAdditionalInformation('payer_identification_number'));
+            $text = __($payment->getAdditionalInformation('payer_identification_type') . ': ' . $payment->getAdditionalInformation('payer_identification_number'));
             $infoPayments[$payment->getAdditionalInformation('payer_identification_type')] = array(
-                "text"  => $text,
+                "text" => $text,
                 "value" => $payment->getAdditionalInformation('payer_identification_number')
             );
         }
@@ -127,6 +103,10 @@ class MercadoPago_Core_Model_Core
         return $infoPayments;
     }
 
+    /**
+     * @param $status
+     * @return string
+     */
     protected function validStatusTwoPayments($status)
     {
         $arrayStatus = explode(" | ", $status);
@@ -150,49 +130,62 @@ class MercadoPago_Core_Model_Core
         return $statusFinal;
     }
 
+    /**
+     * @param $status
+     * @param $statusDetail
+     * @param $paymentMethod
+     * @param $installment
+     * @param $amount
+     * @return array
+     * TODO michel: Retirar variaveis nao utilizadas
+     */
     public function getMessageByStatus($status, $statusDetail, $paymentMethod, $installment, $amount)
     {
-      // @NEED_REFACTOR
-      $order_id = Mage::getSingleton('checkout/session')->getLastRealOrderId();
-      $order = Mage::getModel('sales/order')->loadByIncrementId($order_id);
-      $payment = $order->getPayment();
+        $order_id = Mage::getSingleton('checkout/session')->getLastRealOrderId();
+        $order = Mage::getModel('sales/order')->loadByIncrementId($order_id);
+        $payment = $order->getPayment();
 
 
-      $status = $payment->getAdditionalInformation('status');
-      $statusDetail = $payment->getAdditionalInformation('status_detail');
-      $paymentMethod = $payment->getAdditionalInformation('payment_method');
-      $installment = $payment->getAdditionalInformation('installments');
-      $amount = $this->getTotalOrder($order);
+        $status = $payment->getAdditionalInformation('status');
+        $statusDetail = $payment->getAdditionalInformation('status_detail');
+        $paymentMethod = $payment->getAdditionalInformation('payment_method');
+        $installment = $payment->getAdditionalInformation('installments');
+        $amount = $this->getTotalOrder($order);
 
-      $status = $this->validStatusTwoPayments($status);
-      $statusDetail = $this->validStatusTwoPayments($statusDetail);
+        $status = $this->validStatusTwoPayments($status);
+        $statusDetail = $this->validStatusTwoPayments($statusDetail);
 
-      $message = array(
-        "title"   => "",
-        "message" => ""
-      );
+        $message = array(
+            "title" => "",
+            "message" => ""
+        );
 
-      $rawMessage = Mage::helper('mercadopago/statusMessage')->getMessage($status);
-      $message['title'] = Mage::helper('mercadopago')->__($rawMessage['title']);
+        $rawMessage = Mage::helper('mercadopago/statusMessage')->getMessage($status);
+        $message['title'] = Mage::helper('mercadopago')->__($rawMessage['title']);
 
-      if ($status == 'rejected') {
-        if ($statusDetail == 'cc_rejected_invalid_installments') {
-          $message['message'] = Mage::helper('mercadopago')
-          ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod), $installment);
-        } elseif ($statusDetail == 'cc_rejected_call_for_authorize') {
-          $message['message'] = Mage::helper('mercadopago')
-          ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod), $amount);
+        if ($status == 'rejected') {
+            if ($statusDetail == 'cc_rejected_invalid_installments') {
+                $message['message'] = Mage::helper('mercadopago')
+                    ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod), $installment);
+            } elseif ($statusDetail == 'cc_rejected_call_for_authorize') {
+                $message['message'] = Mage::helper('mercadopago')
+                    ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod), $amount);
+            } else {
+                $message['message'] = Mage::helper('mercadopago')
+                    ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod));
+            }
         } else {
-          $message['message'] = Mage::helper('mercadopago')
-          ->__(Mage::helper('mercadopago/statusDetailMessage')->getMessage($statusDetail), strtoupper($paymentMethod));
+            $message['message'] = Mage::helper('mercadopago')->__($rawMessage['message']);
         }
-      } else {
-        $message['message'] = Mage::helper('mercadopago')->__($rawMessage['message']);
-      }
 
-      return $message;
+        return $message;
     }
 
+    /**
+     * @param $customer
+     * @param $order
+     * @return array
+     */
     protected function getCustomerInfo($customer, $order)
     {
         $email = htmlentities($customer->getEmail());
@@ -213,154 +206,22 @@ class MercadoPago_Core_Model_Core
         return array('email' => $email, 'first_name' => $firstName, 'last_name' => $lastName);
     }
 
-    protected function getItemsInfo($order)
-    {
-        $dataItems = array();
-        foreach ($order->getAllVisibleItems() as $item) {
-            $product = $item->getProduct();
-            $image = (string)Mage::helper('catalog/image')->init($product, 'image');
-
-            $dataItems[] = array(
-                "id"          => $item->getSku(),
-                "title"       => $product->getName(),
-                "description" => $product->getName(),
-                "picture_url" => $image,
-                "category_id" => Mage::getStoreConfig('payment/mercadopago/category_id'),
-                "quantity"    => (int)number_format($item->getQtyOrdered(), 0, '.', ''),
-                "unit_price"  => (float)number_format($product->getPrice(), 2, '.', '')
-            );
-        }
-
-        /* verify discount and add it like an item */
-        $discount = $this->getDiscount();
-        if ($discount != 0) {
-            $dataItems[] = array(
-                "title"       => "Discount by the Store",
-                "description" => "Discount by the Store",
-                "quantity"    => 1,
-                "unit_price"  => (float)number_format($discount, 2, '.', '')
-            );
-        }
-
-        return $dataItems;
-
-    }
-
-    protected function getCouponInfo($coupon, $couponCode)
-    {
-        $infoCoupon = array();
-        $infoCoupon['coupon_amount'] = (float)$coupon['response']['coupon_amount'];
-        $infoCoupon['coupon_code'] = $couponCode;
-        $infoCoupon['campaign_id'] = $coupon['response']['id'];
-        if ($coupon['status'] == 200) {
-            Mage::helper('mercadopago')->log("Coupon applied. API response 200.", self::LOG_FILE);
-        } else {
-            Mage::helper('mercadopago')->log("Coupon invalid, not applied.", self::LOG_FILE);
-        }
-
-        return $infoCoupon;
-    }
-
-    public function makeDefaultPreferencePaymentV1($paymentInfo = array())
-    {
-        $quote = $this->_getQuote();
-        $orderId = $quote->getReservedOrderId();
-        $order = $this->_getOrder($orderId);
-        $customer = Mage::getSingleton('customer/session')->getCustomer();
-
-        $billingAddress = $quote->getBillingAddress()->getData();
-        $customerInfo = $this->getCustomerInfo($customer, $order);
-
-        /* INIT PREFERENCE */
-        $preference = array();
-
-        $preference['notification_url'] = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK) . "mercadopago/notifications/custom";
-
-        $preference['description'] = Mage::helper('mercadopago')->__("Order # %s in store %s", $orderId, Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_LINK, true));
-        if (isset($paymentInfo['transaction_amount'])) {
-            $preference['transaction_amount'] = (float)$paymentInfo['transaction_amount'];
-        } else {
-            $preference['transaction_amount'] = (float)$this->getAmount();
-        }
-
-        $preference['external_reference'] = $orderId;
-        $preference['payer']['email'] = $customerInfo['email'];
-
-        if (!empty($paymentInfo['identification_type'])) {
-            $preference['payer']['identification']['type'] = $paymentInfo['identification_type'];
-            $preference['payer']['identification']['number'] = $paymentInfo['identification_number'];
-        }
-        $preference['additional_info']['items'] = $this->getItemsInfo($order);
-
-        $preference['additional_info']['payer']['first_name'] = $customerInfo['first_name'];
-        $preference['additional_info']['payer']['last_name'] = $customerInfo['last_name'];
-
-        $preference['additional_info']['payer']['address'] = array(
-            "zip_code"      => $billingAddress['postcode'],
-            "street_name"   => $billingAddress['street'] . " - " . $billingAddress['city'] . " - " . $billingAddress['country_id'],
-            "street_number" => ''
-        );
-
-        $preference['additional_info']['payer']['registration_date'] = date('Y-m-d', $customer->getCreatedAtTimestamp()) . "T" . date('H:i:s', $customer->getCreatedAtTimestamp());
-
-        if ($order->canShip()) {
-            $shippingAddress = $order->getShippingAddress();
-            $shipping = $shippingAddress->getData();
-
-            $preference['additional_info']['shipments']['receiver_address'] = array(
-                "zip_code"      => $shipping['postcode'],
-                "street_name"   => $shipping['street'] . " - " . $shipping['city'] . " - " . $shipping['country_id'],
-                "street_number" => '',
-                "floor"         => "-",
-                "apartment"     => "-",
-
-            );
-        }
-
-        $preference['additional_info']['payer']['phone'] = array(
-            "area_code" => "0",
-            "number"    => $billingAddress['telephone']
-        );
-
-        if (!empty($paymentInfo['coupon_code'])) {
-            $couponCode = $paymentInfo['coupon_code'];
-            Mage::helper('mercadopago')->log("Validating coupon_code: " . $couponCode, self::LOG_FILE);
-
-            $coupon = $this->validCoupon($couponCode);
-            Mage::helper('mercadopago')->log("Response API Coupon: ", self::LOG_FILE, $coupon);
-            if(isset($coupon['status']) && $coupon['status'] < 300){
-              $couponInfo = $this->getCouponInfo($coupon, $couponCode);
-              $preference['coupon_amount'] = $couponInfo['coupon_amount'];
-              $preference['coupon_code'] = strtoupper($couponInfo['coupon_code']);
-              $preference['campaign_id'] = $couponInfo['campaign_id'];
-              Mage::helper('mercadopago')->log("Applied coupon..", self::LOG_FILE);
-            }
-
-        }
-
-        $sponsorId = Mage::getStoreConfig('payment/mercadopago/sponsor_id');
-        Mage::helper('mercadopago')->log("Sponsor_id", 'mercadopago-standard.log', $sponsorId);
-        if (!empty($sponsorId)) {
-            Mage::helper('mercadopago')->log("Sponsor_id identificado", self::LOG_FILE, $sponsorId);
-            $preference['sponsor_id'] = (int)$sponsorId;
-        }
-
-        return $preference;
-    }
-
-
+    /**
+     * @param $preference
+     * @return mixed
+     * @throws MercadoPago_Core_Model_Api_V1_Exception
+     */
     public function postPaymentV1($preference)
     {
-
         if (!$this->_accessToken) {
             $this->_accessToken = Mage::getStoreConfig(self::XML_PATH_ACCESS_TOKEN);
         }
-        Mage::helper('mercadopago')->log("Access Token for Post", self::LOG_FILE, $this->_accessToken);
+        Mage::helper('mercadopago/log')->log("Access Token for Post", self::LOG_FILE, $this->_accessToken);
 
         //set sdk php mercadopago
         $mp = Mage::helper('mercadopago')->getApiInstance($this->_accessToken);
         $response = $mp->post("/v1/payments", $preference);
-        Mage::helper('mercadopago')->log("POST /v1/payments", self::LOG_FILE, $response);
+        Mage::helper('mercadopago/log')->log("POST /v1/payments", self::LOG_FILE, $response);
 
         if ($response['status'] == 200 || $response['status'] == 201) {
             return $response;
@@ -375,14 +236,18 @@ class MercadoPago_Core_Model_Core
                 $e = $exception->getUserMessage();
             }
 
-            Mage::helper('mercadopago')->log("error post pago: " . $e, self::LOG_FILE);
-            Mage::helper('mercadopago')->log("response post pago: ", self::LOG_FILE, $response);
+            Mage::helper('mercadopago/log')->log("error post pago: " . $e, self::LOG_FILE);
+            Mage::helper('mercadopago/log')->log("response post pago: ", self::LOG_FILE, $response);
 
             $exception->setMessage($e);
             throw $exception;
         }
     }
 
+    /**
+     * @param $payment_id
+     * @return mixed
+     */
     public function getPayment($payment_id)
     {
         if (!$this->_clientId || !$this->_clientSecret) {
@@ -394,6 +259,10 @@ class MercadoPago_Core_Model_Core
         return $mp->get("/v1/payments/" . $payment_id);
     }
 
+    /**
+     * @param $payment_id
+     * @return mixed
+     */
     public function getPaymentV1($payment_id)
     {
         if (!$this->_accessToken) {
@@ -428,54 +297,15 @@ class MercadoPago_Core_Model_Core
         return $payment_methods;
     }
 
-    public function getEmailCustomer()
-    {
-        $customer = Mage::getSingleton('customer/session')->getCustomer();
-        $email = $customer->getEmail();
-
-        if (empty($email)) {
-            $quote = $this->_getQuote();
-            $email = $quote->getBillingAddress()->getEmail();
-        }
-
-        return $email;
-    }
-
 
     public function getAmount()
     {
         $quote = $this->_getQuote();
         $total = $quote->getBaseSubtotalWithDiscount() + $quote->getShippingAddress()->getShippingAmount() + $quote->getShippingAddress()->getBaseTaxAmount();
 
-        return (float) $total;
+        return (float)$total;
     }
 
-    public function validCoupon($id)
-    {
-        if (!$this->_accessToken) {
-            $this->_accessToken = Mage::getStoreConfig(self::XML_PATH_ACCESS_TOKEN);
-        }
-
-        $mp = Mage::helper('mercadopago')->getApiInstance($this->_accessToken);
-
-        $params = array(
-            "transaction_amount" => $this->getAmount(),
-            "payer_email"        => $this->getEmailCustomer(),
-            "coupon_code"        => $id
-        );
-
-        $details_discount = $mp->get("/discount_campaigns", $params);
-
-        //add value on return api discount
-        $details_discount['response']['transaction_amount'] = $params['transaction_amount'];
-        $details_discount['response']['params'] = $params;
-
-        if($details_discount['status'] >= 400 && $details_discount['status'] < 500){
-          $details_discount['response']['message'] = Mage::helper('mercadopago')->__($details_discount['response']['message']);
-        }
-
-        return $details_discount;
-    }
 
     public function updateOrder($order = null, $data)
     {
@@ -490,7 +320,7 @@ class MercadoPago_Core_Model_Core
         if (!$order) {
             $order = Mage::getModel('sales/order')->loadByIncrementId($data['external_reference']);
         }
-      
+
         $paymentOrder = $order->getPayment();
         $this->_saveTransaction($data, $paymentOrder);
 
@@ -539,7 +369,8 @@ class MercadoPago_Core_Model_Core
         }
     }
 
-    protected function _addAdditionalInformationToPaymentOrder($data, $additionalFields, $paymentOrder){
+    protected function _addAdditionalInformationToPaymentOrder($data, $additionalFields, $paymentOrder)
+    {
         foreach ($additionalFields as $field) {
             if (isset($data[$field])) {
                 $paymentOrder->setAdditionalInformation($field, $data[$field]);
@@ -566,7 +397,7 @@ class MercadoPago_Core_Model_Core
             $transaction->setIsClosed(true);
             $transaction->save();
         } catch (Exception $e) {
-            Mage::helper('mercadopago')->log('error in update order status: ' . $e, 'mercadopago.log');
+            Mage::helper('mercadopago/log')->log('error in update order status: ' . $e, 'mercadopago.log');
         }
     }
 
@@ -581,15 +412,16 @@ class MercadoPago_Core_Model_Core
         return $mp->get_preapproval_payment($id);
     }
 
-    public function getTotalOrder($order){
-      $total = $order->getBaseGrandTotal();
+    public function getTotalOrder($order)
+    {
+        $total = $order->getBaseGrandTotal();
 
-      if (!$total) {
-          $total = $order->getBasePrice() + $order->getBaseShippingAmount();
-      }
+        if (!$total) {
+            $total = $order->getBasePrice() + $order->getBaseShippingAmount();
+        }
 
-      $total = number_format($total, 2, '.', '');
-      return $total;
+        $total = number_format($total, 2, '.', '');
+        return $total;
     }
 
     // Identification Type
@@ -617,8 +449,8 @@ class MercadoPago_Core_Model_Core
         $mp = Mage::helper('mercadopago')->getApiInstance($this->_accessToken);
 
         $array = array(
-          'payment_type_id' => 'bank_transfer',
-          'marketplace' => 'NONE'
+            'payment_type_id' => 'bank_transfer',
+            'marketplace' => 'NONE'
         );
 
         $payment_methods = $mp->get("/v1/payment_methods/search");

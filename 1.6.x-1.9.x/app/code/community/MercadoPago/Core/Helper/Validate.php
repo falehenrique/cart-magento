@@ -5,6 +5,10 @@
  */
 class MercadoPago_Core_Helper_Validate
 {
+    /**
+     * @param $website
+     * @throws Mage_Core_Exception
+     */
     public function validateAccessToken($website)
     {
         $accessToken = $website->getConfig(MercadoPago_Core_Helper_Data::XML_PATH_ACCESS_TOKEN);
@@ -15,6 +19,10 @@ class MercadoPago_Core_Helper_Validate
         }
     }
 
+    /**
+     * @param $website
+     * @throws Mage_Core_Exception
+     */
     public function validateClientCredentials($website)
     {
         $clientId = $website->getConfig(MercadoPago_Core_Helper_Data::XML_PATH_CLIENT_ID);
@@ -26,6 +34,10 @@ class MercadoPago_Core_Helper_Validate
         }
     }
 
+    /**
+     * @param $website
+     * @throws Mage_Core_Exception
+     */
     public function validateRecurringClientCredentials($website)
     {
         $clientId = $website->getConfig('payment/mercadopago_recurring/client_id');

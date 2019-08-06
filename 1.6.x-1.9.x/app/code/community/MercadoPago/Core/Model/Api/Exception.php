@@ -3,8 +3,7 @@
 /**
  * Exception which thrown by MercadoPago API in case of processable error codes
  */
-class MercadoPago_Core_Model_Api_Exception
-    extends Mage_Core_Exception
+class MercadoPago_Core_Model_Api_Exception extends Mage_Core_Exception
 {
 
     const GENERIC_USER_MESSAGE = "We could not process your payment in this moment. Please check the form data and retry later";
@@ -12,11 +11,10 @@ class MercadoPago_Core_Model_Api_Exception
     protected $messagesMap;
 
     /**
-     * Get error message which can be displayed to website user
-     *
+     * @param null $error
      * @return string
      */
-    public function getUserMessage($error=null)
+    public function getUserMessage($error = null)
     {
         if (!empty($error)) {
             if (Mage::getStoreConfigFlag('payment/mercadopago/debug_mode')) {

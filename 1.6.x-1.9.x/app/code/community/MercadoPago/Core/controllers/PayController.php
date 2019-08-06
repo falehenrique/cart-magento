@@ -29,7 +29,7 @@ class MercadoPago_Core_PayController
 
         //calculate time consumed
         $timeConsumed = round(microtime(true) - $init, 3); 
-        Mage::helper('mercadopago')->log("Time consumed to create preference: " . $timeConsumed . "s", 'mercadopago-standard.log');
+        Mage::helper('mercadopago/log')->log("Time consumed to create preference: " . $timeConsumed . "s", 'mercadopago-standard.log');
 
         $this->loadLayout();
 

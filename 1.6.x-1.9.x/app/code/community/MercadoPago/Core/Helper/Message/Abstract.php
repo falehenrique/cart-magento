@@ -1,16 +1,17 @@
 <?php
 
-abstract class MercadoPago_Core_Helper_Message_Abstract
-    extends Mage_Core_Helper_Abstract
+/**
+ * Class MercadoPago_Core_Helper_Message_Abstract
+ */
+abstract class MercadoPago_Core_Helper_Message_Abstract extends Mage_Core_Helper_Abstract
 {
-
+    /**
+     * @return mixed
+     */
     public abstract function getMessageMap();
 
-
     /**
-     * @param      $key
-     * @param null $args array()
-     *
+     * @param $key
      * @return string
      */
     public function getMessage($key)

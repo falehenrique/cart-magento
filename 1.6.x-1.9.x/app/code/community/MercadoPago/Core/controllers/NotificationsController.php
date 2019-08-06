@@ -40,7 +40,7 @@ class MercadoPago_Core_NotificationsController
     public function indexAction()
     {
         $params = $this->getRequest()->getParams();
-        Mage::helper('mercadopago')->log('Received notification', self::LOG_FILE, $params);
+        Mage::helper('mercadopago/log')->log('Received notification', self::LOG_FILE, $params);
         if (isset($params['topic'])) {
             switch($params['topic']) {
                 case MercadoPago_Core_Helper_Response::TOPIC_RECURRING_PAYMENT: {
@@ -184,7 +184,7 @@ class MercadoPago_Core_NotificationsController
         $this->_statusFinal = $this->_statusHelper->getStatusFinal($this->_paymentData['status'], $this->_merchantOrder);
         $this->_shipmentData = $this->_getShipmentsArray();
         $this->merchantOrder = $merchantOrder;
-
+      
         return true;
     }
 
@@ -355,7 +355,7 @@ class MercadoPago_Core_NotificationsController
         if (empty($paymentData) || ($paymentData['status'] != 200 && $paymentData['status'] != 201)) {
             return;
         }
-        Mage::helper('mercadopago')->log('Recurring PaymentAction Data', self::LOG_FILE, $paymentData);
+        Mage::helper('mercadopago/log')->log('Recurring PaymentAction Data', self::LOG_FILE, $paymentData);
         $paymentData=$paymentData['response']['collection'];
         if ($paymentData['operation_type'] == 'recurring_payment' && $paymentData['status'] == 'approved') {
             $profile = Mage::getModel('sales/recurring_profile')->load($paymentData['external_reference']);

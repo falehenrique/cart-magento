@@ -24,7 +24,7 @@ class MercadoPago_Core_Block_Calculator_CalculatorLink
      *
      * @return bool
      */
-    protected function isAvailableCalculator(){
+    public function isAvailableCalculator(){
 
         $isValidAccessToken = $this->_helperData->isValidAccessToken(Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_ACCESS_TOKEN));
         $pk = Mage::getStoreConfig(MercadoPago_Core_Helper_Data::XML_PATH_PUBLIC_KEY);
@@ -36,7 +36,7 @@ class MercadoPago_Core_Block_Calculator_CalculatorLink
      * @param $nameLayoutContainer string
      * @return bool
      */
-    protected function isPageToShow($nameLayoutContainer){
+    public function isPageToShow($nameLayoutContainer){
 
         $valueConfig = $this->_helperData->getPagesToShow();
         $pages = explode(',', $valueConfig);

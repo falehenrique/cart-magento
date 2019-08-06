@@ -1,47 +1,43 @@
 <?php
 
 /**
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Open Software License (OSL).
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
- *
- * @category       Payment Gateway
- * @package        MercadoPago
- * @author         Gabriel Matsuoka (gabriel.matsuoka@gmail.com)
- * @copyright      Copyright (c) MercadoPago [http://www.mercadopago.com]
- * @license        http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * Class MercadoPago_Core_Model_Source_CategoryId
  */
-class MercadoPago_Core_Model_Source_CategoryId
-    extends Mage_Payment_Model_Method_Abstract
+class MercadoPago_Core_Model_Source_CategoryId extends Mage_Payment_Model_Method_Abstract
 {
+
+    /**
+     * @return array
+     * @throws Exception
+     */
     public function toOptionArray()
     {
-        Mage::helper('mercadopago')->log("Get Categories... ", 'mercadopago.log');
+        try {
+            Mage::helper('mercadopago/log')->log("Get Categories... ", 'mercadopago.log');
+            $response = MercadoPago_RestClient_MpRestClient::get("/item_categories");
+            Mage::helper('mercadopago/log')->log("API item_categories", 'mercadopago.log', $response);
 
-        $response = MercadoPago_Lib_RestClient::get("/item_categories");
-        Mage::helper('mercadopago')->log("API item_categories", 'mercadopago.log', $response);
-
-        $response = $response['response'];
-
-        $cat = array();
-        $count = 0;
-        foreach ($response as $v) {
-            //force category others first
-            if ($v['id'] == "others") {
-                $cat[0] = array('value' => $v['id'], 'label' => Mage::helper('mercadopago')->__($v['description']));
-            } else {
-                $count++;
-                $cat[$count] = array('value' => $v['id'], 'label' => Mage::helper('mercadopago')->__($v['description']));
+            if (!isset($response['response'])) {
+                return array();
             }
 
-        };
+            $response = $response['response'];
 
-        //force order by key
-        ksort($cat);
-
-        return $cat;
+            $cat = array();
+            $count = 0;
+            foreach ($response as $value) {
+                if ($value['id'] == "others") {
+                    $cat[0] = array('value' => $value['id'], 'label' => Mage::helper('mercadopago')->__($value['description']));
+                } else {
+                    $count++;
+                    $cat[$count] = array('value' => $value['id'], 'label' => Mage::helper('mercadopago')->__($value['description']));
+                }
+            }
+            ksort($cat);
+            return $cat;
+        } catch (Exception $e) {
+            Mage::helper('mercadopago/log')->log("ERROR: CategoryId.php:". __FUNCTION__, 'mercadopago.log');
+            return array();
+        }
     }
 }

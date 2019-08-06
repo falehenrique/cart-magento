@@ -123,17 +123,17 @@ class MercadoPago_Core_Model_Observer
 
         $currentBanner = $this->_website->getConfig('payment/' . $typeCheckout . '/banner_checkout');
 
-        Mage::helper('mercadopago')->log("Type Checkout Path: " . $typeCheckout, self::LOG_FILE);
-        Mage::helper('mercadopago')->log("Current Banner: " . $currentBanner, self::LOG_FILE);
-        Mage::helper('mercadopago')->log("Default Banner: " . $defaultBanner, self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Type Checkout Path: " . $typeCheckout, self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Current Banner: " . $currentBanner, self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Default Banner: " . $defaultBanner, self::LOG_FILE);
 
         if (in_array($currentBanner, $this->banners[$typeCheckout])) {
-            Mage::helper('mercadopago')->log("Banner default need update...", self::LOG_FILE);
+            Mage::helper('mercadopago/log')->log("Banner default need update...", self::LOG_FILE);
 
             if ($defaultBanner != $currentBanner) {
                 $this->_saveWebsiteConfig('payment/' . $typeCheckout . '/banner_checkout', $defaultBanner);
 
-                Mage::helper('mercadopago')->log('payment/' . $typeCheckout . '/banner_checkout setted ' . $defaultBanner, self::LOG_FILE);
+                Mage::helper('mercadopago/log')->log('payment/' . $typeCheckout . '/banner_checkout setted ' . $defaultBanner, self::LOG_FILE);
             }
         }
     }
@@ -141,17 +141,17 @@ class MercadoPago_Core_Model_Observer
 
     public function setSponsor()
     {
-        Mage::helper('mercadopago')->log("Sponsor_id: " . $this->_website->getConfig('payment/mercadopago/sponsor_id'), self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Sponsor_id: " . $this->_website->getConfig('payment/mercadopago/sponsor_id'), self::LOG_FILE);
 
         $sponsorId = "";
-        Mage::helper('mercadopago')->log("Valid user test", self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Valid user test", self::LOG_FILE);
 
         $accessToken = $this->_website->getConfig(MercadoPago_Core_Helper_Data::XML_PATH_ACCESS_TOKEN);
-        Mage::helper('mercadopago')->log("Get access_token: " . $accessToken, self::LOG_FILE);
+        Mage::helper('mercadopago/log')->log("Get access_token: " . $accessToken, self::LOG_FILE);
 
         $mp = Mage::helper('mercadopago')->getApiInstance($accessToken);
         $user = $mp->get("/users/me");
-        Mage::helper('mercadopago')->log("API Users response", self::LOG_FILE, $user);
+        Mage::helper('mercadopago/log')->log("API Users response", self::LOG_FILE, $user);
 
         if ($user['status'] == 200 && !in_array("test_user", $user['response']['tags']) && strpos($accessToken, 'TEST') === false) {
             $sponsors = array(
@@ -172,10 +172,10 @@ class MercadoPago_Core_Model_Observer
                 $sponsorId = "";
             }
 
-            Mage::helper('mercadopago')->log("Sponsor id set", self::LOG_FILE, $sponsorId);
+            Mage::helper('mercadopago/log')->log("Sponsor id set", self::LOG_FILE, $sponsorId);
         }
         $this->_saveWebsiteConfig('payment/mercadopago/sponsor_id', $sponsorId);
-        Mage::helper('mercadopago')->log("Sponsor saved", self::LOG_FILE, $sponsorId);
+        Mage::helper('mercadopago/log')->log("Sponsor saved", self::LOG_FILE, $sponsorId);
     }
 
     protected function _saveWebsiteConfig($path, $value)

@@ -35,7 +35,7 @@ class MercadoPago_Core_Model_CustomTicket_Payment
      */
     public function initialize($paymentAction, $stateObject)
     {
-        Mage::helper('mercadopago')->log("Ticket -> initialize", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Ticket -> initialize", 'mercadopago-custom.log');
 
         $response = $this->preparePostPayment();
 
@@ -58,7 +58,7 @@ class MercadoPago_Core_Model_CustomTicket_Payment
         $infoForm = $data->getData();
         $infoForm = $infoForm['mercadopago_customticket'];
 
-        Mage::helper('mercadopago')->log("Ticket -> info form", 'mercadopago-custom.log', $infoForm);
+        Mage::helper('mercadopago/log')->log("Ticket -> info form", 'mercadopago-custom.log', $infoForm);
 
         $info = $this->getInfoInstance();
         $info->setAdditionalInformation('payment_method', $infoForm['payment_method_ticket']);
@@ -83,7 +83,7 @@ class MercadoPago_Core_Model_CustomTicket_Payment
         //check actual time
         $init = microtime(true);
       
-        Mage::helper('mercadopago')->log("Ticket -> init prepare post payment", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Ticket -> init prepare post payment", 'mercadopago-custom.log');
         $core = Mage::getModel('mercadopago/core');
         $quote = $this->_getQuote();
         $orderId = $quote->getReservedOrderId();
@@ -149,14 +149,14 @@ class MercadoPago_Core_Model_CustomTicket_Payment
           $preference['payer']['address']['federal_unit'] = $payment->getAdditionalInformation("address-state");
         }
 
-        Mage::helper('mercadopago')->log("Ticket -> PREFERENCE to POST /v1/payments", 'mercadopago-custom.log', $preference);
+        Mage::helper('mercadopago/log')->log("Ticket -> PREFERENCE to POST /v1/payments", 'mercadopago-custom.log', $preference);
 
         /* POST /v1/payments */
         $response = $core->postPaymentV1($preference);
       
         //calculate time consumed
         $timeConsumed = round(microtime(true) - $init, 3); 
-        Mage::helper('mercadopago')->log("Time consumed to create payment (ticket): " . $timeConsumed . "s", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Time consumed to create payment (ticket): " . $timeConsumed . "s", 'mercadopago-custom.log');
       
         return $response;
     }
@@ -164,7 +164,7 @@ class MercadoPago_Core_Model_CustomTicket_Payment
     public function getOrderPlaceRedirectUrl()
     {
 
-        Mage::helper('mercadopago')->log("Ticket -> getOrderPlaceRedirectUrl", 'mercadopago-custom.log');
+        Mage::helper('mercadopago/log')->log("Ticket -> getOrderPlaceRedirectUrl", 'mercadopago-custom.log');
 
         return Mage::getUrl('mercadopago/checkout/page', array('_secure' => true));
     }

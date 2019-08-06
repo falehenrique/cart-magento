@@ -1,10 +1,13 @@
 <?php
+
 /**
  * Order Statuses source model
  */
 class MercadoPago_Core_Model_Source_Order_Status extends Mage_Adminhtml_Model_System_Config_Source_Order_Status
 {
-    // set null to enable all possible
+    /**
+     * @var array
+     */
     protected $_stateStatuses = array(
         Mage_Sales_Model_Order::STATE_NEW,
         Mage_Sales_Model_Order::STATE_PENDING_PAYMENT,
@@ -15,12 +18,14 @@ class MercadoPago_Core_Model_Source_Order_Status extends Mage_Adminhtml_Model_Sy
         Mage_Sales_Model_Order::STATE_HOLDED,
     );
 
+    /**
+     * @return array
+     */
     public function toOptionArray()
     {
         if ($this->_stateStatuses) {
             $statuses = Mage::getSingleton('sales/order_config')->getStateStatuses($this->_stateStatuses);
-        }
-        else {
+        } else {
             $statuses = Mage::getSingleton('sales/order_config')->getStatuses();
         }
         $options = array();
@@ -28,7 +33,7 @@ class MercadoPago_Core_Model_Source_Order_Status extends Mage_Adminhtml_Model_Sy
             'value' => '',
             'label' => Mage::helper('adminhtml')->__('-- No Status Change --')
         );
-        foreach ($statuses as $code=>$label) {
+        foreach ($statuses as $code => $label) {
             $options[] = array(
                 'value' => $code,
                 'label' => $label
